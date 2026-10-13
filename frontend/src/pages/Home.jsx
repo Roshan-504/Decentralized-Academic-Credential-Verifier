@@ -163,6 +163,22 @@ const Home = () => {
                 </div>
               </div>
             </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-medium text-slate-500 mb-1">Issued On</p>
+              <p className="text-sm font-medium text-slate-800">{result.issuedAt}</p>
+            </div>
+
+            <div className="sm:col-span-2 pt-2">
+              <p className="text-xs font-medium text-slate-500 mb-1">Blockchain Proof</p>
+              <a
+                href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-600 hover:underline font-medium"
+              >
+                View Contract on Etherscan →
+              </a>
+            </div>
           </div>
         </div>
       )}

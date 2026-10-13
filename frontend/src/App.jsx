@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import IssueCertificate from './pages/IssueCertificate';
+import ManageIssuers from './pages/ManageIssuers';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/issue" element={<IssueCertificate />} />
+        <Route path="/admin/issuers" element={<ManageIssuers />} />
       </Routes>
     </BrowserRouter>
   );
