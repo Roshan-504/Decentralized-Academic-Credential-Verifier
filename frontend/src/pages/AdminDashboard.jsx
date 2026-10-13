@@ -24,18 +24,30 @@ const AdminDashboard = () => {
   const [isRevoking, setIsRevoking] = useState(false);
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  }, []);
 
   const fetchCertificates = useCallback(async () => {
     try {
-      const { data } = await API.get('/certificates');
-      setCertificates(data);
-    } catch {
-      toast.error('Failed to load certificates');
+      setLoading(true);
+      if (user?.role === 'issuer' && user?._id) {
+        const { data } = await API.get(`/certificates/by-issuer/${user._id}`);
+        setCertificates(Array.isArray(data) ? data : []);
+      } else {
+        const { data } = await API.get('/certificates');
+        setCertificates(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to load certificates');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -120,22 +132,33 @@ const AdminDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             
             <div>
-              <h1 className="font-serif text-xl sm:text-2xl font-bold text-slate-100">
-                Admin Dashboard
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-xl sm:text-2xl font-bold text-slate-100">
+                  {user?.role === 'issuer' ? 'Issuer Dashboard' : 'Admin Dashboard'}
+                </h1>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold border ${
+                  user?.role === 'admin'
+                    ? 'bg-amber-400/10 text-amber-300 border-amber-400/25'
+                    : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/25'
+                }`}>
+                  {user?.role || 'user'}
+                </span>
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Welcome, {user?.name || 'Admin'}
+                {user?.role === 'issuer' ? `Credentials issued by ${user?.name}` : `Welcome, ${user?.name || 'Admin'}`}
               </p>
             </div>
 
             <div className="flex items-center gap-2.5">
-              <Link
-                to="/admin/issuers"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 transition"
-              >
-                <Users className="w-3.5 h-3.5 text-amber-400" />
-                <span>Manage Issuers</span>
-              </Link>
+              {user?.role === 'admin' && (
+                <Link
+                  to="/admin/issuers"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 transition"
+                >
+                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Manage Issuers</span>
+                </Link>
+              )}
 
               <Link
                 to="/admin/issue"
@@ -154,7 +177,9 @@ const AdminDashboard = () => {
         {/* Metric Cards */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="p-4 rounded-xl bg-[#0c121e] border border-slate-800">
-            <span className="text-[11px] font-mono uppercase text-slate-400">Total Issued</span>
+            <span className="text-[11px] font-mono uppercase text-slate-400">
+              {user?.role === 'issuer' ? 'Issued by You' : 'Total Issued'}
+            </span>
             <p className="text-2xl font-serif font-bold text-slate-100 mt-1 font-mono">{totalCount}</p>
           </div>
 
@@ -315,7 +340,7 @@ const AdminDashboard = () => {
                       </td>
 
                       <td className="px-5 py-3.5 text-right">
-                        {cert.isValid && (
+                        {user?.role === 'admin' && cert.isValid && (
                           <button
                             onClick={() => setRevokingCertId(cert.certificateId)}
                             className="text-rose-400 hover:text-rose-300 text-xs font-medium cursor-pointer"

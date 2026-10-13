@@ -1,8 +1,9 @@
+import mongoose from 'mongoose';
 import Certificate from '../models/Certificate.js';
 
 // @desc    Issue a new certificate
 // @route   POST /api/certificates
-// @access  Private (Admin)
+// @access  Private (Admin or Issuer)
 export const issueCertificate = async (req, res) => {
   try {
     const {
@@ -19,21 +20,25 @@ export const issueCertificate = async (req, res) => {
       blockchainTxHash,
     } = req.body;
 
-    const exists = await Certificate.findOne({ certificateId });
+    if (!certificateId || !studentName || !program || !batch || !department || !course || !year || !grade || !institute) {
+      return res.status(400).json({ message: 'Please provide all required certificate fields' });
+    }
+
+    const exists = await Certificate.findOne({ certificateId: certificateId.trim() });
     if (exists) {
       return res.status(400).json({ message: 'Certificate ID already exists' });
     }
 
     const certificate = await Certificate.create({
-      certificateId,
-      studentName,
+      certificateId: certificateId.trim(),
+      studentName: studentName.trim(),
       program,
-      batch,
-      department,
-      course,
-      year,
-      grade,
-      institute,
+      batch: batch.trim(),
+      department: department.trim(),
+      course: course.trim(),
+      year: year.trim(),
+      grade: grade.trim(),
+      institute: institute.trim(),
       photoUrl: photoUrl || '',
       blockchainTxHash: blockchainTxHash || '',
       issuedBy: req.user._id,
@@ -48,11 +53,32 @@ export const issueCertificate = async (req, res) => {
 
 // @desc    Get all certificates
 // @route   GET /api/certificates
-// @access  Private (Admin)
+// @access  Private
 export const getAllCertificates = async (req, res) => {
   try {
     const certificates = await Certificate.find()
-      .populate('issuedBy', 'name email')
+      .populate('issuedBy', 'name email role walletAddress')
+      .sort({ createdAt: -1 });
+
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all certificates issued by a specific issuer
+// @route   GET /api/certificates/by-issuer/:issuerId
+// @access  Private
+export const getCertificatesByIssuer = async (req, res) => {
+  try {
+    const { issuerId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(issuerId)) {
+      return res.status(400).json({ message: 'Invalid issuer ID' });
+    }
+
+    const certificates = await Certificate.find({ issuedBy: issuerId })
+      .populate('issuedBy', 'name email role walletAddress')
       .sort({ createdAt: -1 });
 
     res.json(certificates);
@@ -67,7 +93,7 @@ export const getAllCertificates = async (req, res) => {
 export const getCertificateById = async (req, res) => {
   try {
     const certificate = await Certificate.findOne({ certificateId: req.params.id })
-      .populate('issuedBy', 'name email');
+      .populate('issuedBy', 'name email role walletAddress');
 
     if (!certificate) {
       return res.status(404).json({ message: 'Certificate not found' });

@@ -88,23 +88,34 @@ const Navbar = () => {
                   Issue
                 </Link>
 
-                <Link
-                  to="/admin/issuers"
-                  className={`px-3 py-1.5 rounded-lg transition-colors ${
-                    location.pathname === '/admin/issuers'
-                      ? 'bg-amber-400/10 text-amber-300 border border-amber-400/25'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
-                  }`}
-                >
-                  Issuers
-                </Link>
+                {user.role === 'admin' && (
+                  <Link
+                    to="/admin/issuers"
+                    className={`px-3 py-1.5 rounded-lg transition-colors ${
+                      location.pathname === '/admin/issuers'
+                        ? 'bg-amber-400/10 text-amber-300 border border-amber-400/25'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    Issuers
+                  </Link>
+                )}
 
                 <div className="h-4 w-px bg-slate-800 mx-2" />
 
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 max-w-[120px] truncate">
-                    {user.name}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-300 max-w-[120px] truncate">
+                      {user.name}
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-semibold border ${
+                      user.role === 'admin'
+                        ? 'bg-amber-400/10 text-amber-300 border-amber-400/25'
+                        : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/25'
+                    }`}>
+                      {user.role || 'user'}
+                    </span>
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
@@ -171,16 +182,21 @@ const Navbar = () => {
               >
                 Issue Certificate
               </Link>
-              <Link
-                to="/admin/issuers"
-                className={`block px-3 py-2 rounded-lg ${
-                  location.pathname === '/admin/issuers' ? 'text-amber-300 bg-amber-400/10' : 'text-slate-300'
-                }`}
-              >
-                Manage Issuers
-              </Link>
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin/issuers"
+                  className={`block px-3 py-2 rounded-lg ${
+                    location.pathname === '/admin/issuers' ? 'text-amber-300 bg-amber-400/10' : 'text-slate-300'
+                  }`}
+                >
+                  Manage Issuers
+                </Link>
+              )}
               <div className="pt-2 border-t border-slate-800 flex items-center justify-between px-3">
-                <span className="text-xs text-slate-400">{user.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-300">{user.name}</span>
+                  <span className="text-[10px] text-amber-300 font-mono uppercase">({user.role})</span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="text-xs text-rose-400 hover:text-rose-300"

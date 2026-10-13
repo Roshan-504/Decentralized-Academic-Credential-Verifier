@@ -25,7 +25,7 @@ const AdminLogin = () => {
     try {
       const { data } = await API.post('/auth/login', { email, password });
       localStorage.setItem('user', JSON.stringify(data));
-      toast.success('Login successful');
+      toast.success(`Welcome ${data.name || ''} (${data.role === 'admin' ? 'Admin' : 'Issuer'})`);
       navigate('/admin/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');

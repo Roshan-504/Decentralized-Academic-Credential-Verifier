@@ -6,10 +6,16 @@ const API = axios.create({
 
 // Add token automatically if available
 API.interceptors.request.use((req) => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const { token } = JSON.parse(user);
-    req.headers.Authorization = `Bearer ${token}`;
+  try {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      if (parsed?.token) {
+        req.headers.Authorization = `Bearer ${parsed.token}`;
+      }
+    }
+  } catch {
+    // Ignore invalid JSON in localStorage
   }
   return req;
 });
