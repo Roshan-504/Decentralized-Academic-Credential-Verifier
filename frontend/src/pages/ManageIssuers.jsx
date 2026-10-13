@@ -20,6 +20,7 @@ import {
   Trash2,
   ShieldCheck,
   ShieldAlert,
+  ShieldX,
   X,
   ExternalLink
 } from 'lucide-react';
@@ -43,6 +44,7 @@ const ManageIssuers = () => {
   const [fetchError, setFetchError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [authorizingId, setAuthorizingId] = useState(null);
+  const [unauthorizingId, setUnauthorizingId] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
@@ -237,7 +239,45 @@ const ManageIssuers = () => {
     }
   };
 
-  // 3. Edit Issuer Handlers
+  // 3. Unauthorize / Revoke on Blockchain (MetaMask removeIssuer call)
+  const handleUnauthorizeOnChain = async (issuer) => {
+    if (!issuer.walletAddress || !ethers.isAddress(issuer.walletAddress.trim())) {
+      toast.error('Invalid Ethereum wallet address format');
+      return;
+    }
+
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask to modify authorization on blockchain');
+      return;
+    }
+
+    setUnauthorizingId(issuer._id);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      const signToast = toast.loading('Confirm revocation in MetaMask...');
+      const tx = await contract.removeIssuer(issuer.walletAddress.trim());
+      toast.dismiss(signToast);
+
+      const waitToast = toast.loading('Confirming revocation on Sepolia...');
+      await tx.wait();
+      toast.dismiss(waitToast);
+
+      toast.success('Issuer un-authorized on blockchain!');
+      setOnChainStatusMap((prev) => ({ ...prev, [issuer._id]: false }));
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error(error.reason || error.message || 'Revocation failed. Are you Super Admin?');
+    } finally {
+      setUnauthorizingId(null);
+    }
+  };
+
+  // 4. Edit Issuer Handlers
   const openEditModal = (issuer) => {
     setEditingIssuer(issuer);
     setEditForm({
@@ -523,6 +563,7 @@ const ManageIssuers = () => {
                         const isAuthorizedOnChain = onChainStatusMap[issuer._id] === true;
                         const hasWallet = Boolean(issuer.walletAddress && ethers.isAddress(issuer.walletAddress));
                         const isAuthorizing = authorizingId === issuer._id;
+                        const isUnauthorizing = unauthorizingId === issuer._id;
 
                         return (
                           <tr key={issuer._id} className="hover:bg-slate-800/20 transition-colors">
@@ -609,11 +650,11 @@ const ManageIssuers = () => {
                             <td className="px-5 py-4 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 
-                                {/* Authorize on Blockchain Button (shown only if not yet authorized) */}
-                                {!isAuthorizedOnChain && (
+                                {/* Blockchain Authorization Toggle Controls */}
+                                {!isAuthorizedOnChain ? (
                                   <button
                                     onClick={() => handleAuthorizeOnChain(issuer)}
-                                    disabled={isAuthorizing}
+                                    disabled={isAuthorizing || isUnauthorizing}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 disabled:opacity-50 transition cursor-pointer shadow-sm"
                                     title="Authorize wallet address on Ethereum Sepolia contract"
                                   >
@@ -626,6 +667,25 @@ const ManageIssuers = () => {
                                       <>
                                         <ShieldCheck className="w-3.5 h-3.5 text-slate-950" />
                                         <span>Authorize on Blockchain</span>
+                                      </>
+                                    )}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleUnauthorizeOnChain(issuer)}
+                                    disabled={isAuthorizing || isUnauthorizing}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 disabled:opacity-50 transition cursor-pointer shadow-sm"
+                                    title="Revoke wallet address authorization on Ethereum Sepolia contract"
+                                  >
+                                    {isUnauthorizing ? (
+                                      <>
+                                        <div className="w-3 h-3 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                                        <span>Revoking...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ShieldX className="w-3.5 h-3.5 text-rose-400" />
+                                        <span>Unauthorize on Blockchain</span>
                                       </>
                                     )}
                                   </button>
