@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import { 
   Wallet, 
   Upload, 
-  GraduationCap, 
   Trash2, 
   ArrowLeft 
 } from 'lucide-react';

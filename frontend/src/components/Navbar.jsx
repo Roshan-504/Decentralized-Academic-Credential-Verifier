@@ -2,10 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
-  KeyRound, 
-  LayoutDashboard, 
-  FilePlus2, 
-  Users, 
   LogOut, 
   Menu, 
   X 

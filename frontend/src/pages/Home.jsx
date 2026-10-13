@@ -3,16 +3,12 @@ import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../utils/contract';
 import toast from 'react-hot-toast';
 import { 
-  ShieldCheck, 
-  Search, 
   CheckCircle2, 
   XCircle, 
   ExternalLink, 
   Copy, 
   Check, 
   GraduationCap, 
-  Award, 
-  BookOpen, 
   Printer 
 } from 'lucide-react';
 

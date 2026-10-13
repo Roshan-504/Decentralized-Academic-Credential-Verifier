@@ -7,9 +7,6 @@ import {
   Users, 
   Search, 
   RotateCcw, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
   Copy, 
   Check 
 } from 'lucide-react';
